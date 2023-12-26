@@ -37,11 +37,11 @@ void Heap(Classrooms ar[], int N, int i){
 	int left = 2 * i + 1;
 	int right = 2 * i + 2;
 	
-	if(left<N && compare(&ar[left],&ar[big]) > 0){
+	if(left<N && compare(&ar[left],&ar[big]) < 0){
 		big=left;
 	}
 	
-	if(right<N && compare(&ar[right],&ar[big]) > 0){
+	if(right<N && compare(&ar[right],&ar[big]) < 0){
 		big=right;
 	}
 	
