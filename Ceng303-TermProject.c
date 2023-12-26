@@ -15,6 +15,57 @@ typedef struct{
 	int capacity;
 }Classrooms;
 
+int compare(const Classrooms* A, const Classrooms* B){
+	int difference= (B->capacity)-(A->capacity);
+	
+	if(difference==0){
+		for(int i=0; i<sizeof(A->room_id)-1; i++){
+			if(A->room_id[i] < B->room_id[i]){
+				return -1;
+			}
+			if(A->room_id[i] > B->room_id[i]){
+				return 1;
+			}
+		}
+	}
+	
+	return difference;
+}
+void Heap(Classrooms ar[], int N, int i){
+	
+	int big=i;
+	int left = 2 * i + 1;
+	int right = 2 * i + 2;
+	
+	if(left<N && compare(&ar[left],&ar[big]) > 0){
+		big=left;
+	}
+	
+	if(right<N && compare(&ar[right],&ar[big]) > 0){
+		big=right;
+	}
+	
+	if(big!=i){
+		Classrooms temp= ar[i];
+		ar[i]=ar[big];
+		ar[big]=temp;
+		
+		Heap(ar, N, big);
+	}
+}
+
+void sort(Classrooms ar[], int N){
+	for(int i=(N/2)-1; i>=0; i--){
+		Heap(ar,N,i);
+	}
+	for(int i=N-1; i>=0; i--){
+		Classrooms temp=ar[0];
+		ar[0]=ar[i];
+		ar[i]=temp;
+		
+		Heap(ar, i, 0);
+	}
+}
 
 int main(int argc, char *argv[]) {
 	Classes classes[MAX_CLASSES];
@@ -56,14 +107,16 @@ int main(int argc, char *argv[]) {
     }
     fclose(classroomsFile);
     
-    int i;
-        for (i = 0; i < classesCount; i++) {
+    sort(classrooms, sizeof(classrooms)/sizeof(classrooms[0]));
+    
+        for (int i = 0; i < classesCount; i++) {
         printf("student ID: %d, Profname: %s, class ID: %s, time: %d\n",
                classes[i].student_id, classes[i].prof_name, classes[i].course_id, classes[i].exam_duration);
     }
 
-        for (i = 0; i <classroomsCount; ++i) {
+        for (int i = 0; i <classroomsCount; ++i) {
         printf("Room ID: %s, Capacity: %d\n", classrooms[i].room_id, classrooms[i].capacity);
     }
+    
 	return 0;
 }
