@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 #define MAX_CLASSES 100 //Change this if the input is large
 #define MAX_CLASSROOMS 50 //Change this if the input is large
 
@@ -15,87 +17,41 @@ typedef struct{
 	int capacity;
 }Classrooms;
 
-int compare(const Classrooms* A, const Classrooms* B){
-	int difference= (B->capacity)-(A->capacity);
-	
-	if(difference==0){
-		for(int i=0; i<sizeof(A->room_id)-1; i++){
-			if(A->room_id[i] < B->room_id[i]){
-				return -1;
-			}
-			if(A->room_id[i] > B->room_id[i]){
-				return 1;
-			}
-		}
-	}
-	
-	return difference;
-}
-void Heap(Classrooms ar[], int N, int i){
-	
-	int big=i;
-	int left = 2 * i + 1;
-	int right = 2 * i + 2;
-	
-	if(left<N && compare(&ar[left],&ar[big]) < 0){
-		big=left;
-	}
-	
-	if(right<N && compare(&ar[right],&ar[big]) < 0){
-		big=right;
-	}
-	
-	if(big!=i){
-		Classrooms temp= ar[i];
-		ar[i]=ar[big];
-		ar[big]=temp;
-		
-		Heap(ar, N, big);
-	}
+typedef struct{
+	char day[9];
+	int startingTime;
+	int endingTime;
+}BlockedHours;
+
+void getFiles(char arr[], const char *forWhat) {
+    printf("Please enter the file name for %s: ", forWhat);
+    scanf("%s", arr);
+    printf("\n");
 }
 
-void sort(Classrooms ar[], int N){
-	for(int i=(N/2)-1; i>=0; i--){
-		Heap(ar,N,i);
-	}
-	for(int i=N-1; i>=0; i--){
-		Classrooms temp=ar[0];
-		ar[0]=ar[i];
-		ar[i]=temp;
-		
-		Heap(ar, i, 0);
-	}
-}
-
-int main(int argc, char *argv[]) {
-	Classes classes[MAX_CLASSES];
-	Classrooms classrooms[MAX_CLASSROOMS];
-	
-	//-----------------Classes csv---------------
-	char classesFileName[]="classes.csv"; //write your classes filename here
-	FILE *classesFile = fopen(classesFileName, "r");
-    if (classesFile == NULL) {
+void readingToClassesStruct(FILE *classesFile, Classes classes[]){
+	if (classesFile == NULL) {
         perror("Cannot find the file!");
-        exit(EXIT_FAILURE);
+        exit(EXIT_FAILURE); //if the file does not exist we quit
     }
-
-
+    
     int classesCount = 0;
     char line[MAX_CLASSES];
     while (fgets(line, sizeof(line), classesFile) != NULL) {
-        // reading from the file to struct
+        // reading from the file to classes struct
 		sscanf(line, "%d,%19[^,],%19[^,],%d", &classes[classesCount].student_id, classes[classesCount].prof_name, classes[classesCount].course_id, &classes[classesCount].exam_duration);
 
 		classesCount++;
     }
+   fclose(classesFile);
+    
+}
 
-    fclose(classesFile);
-    //-----------------------Classrooms csv-------------
-    char classroomsFileName[]="classrooms.csv"; //write your classrooms filename here
-	FILE *classroomsFile = fopen(classroomsFileName, "r");
-        if (classroomsFile == NULL) {
+void readingToClassroomsStruct(FILE *classroomsFile, Classrooms classrooms[]){
+	
+	    if (classroomsFile == NULL) {
         perror("Cannot find the file!");
-        exit(EXIT_FAILURE);
+        exit(EXIT_FAILURE); //if the file does not exist we quit
     }
     
     int classroomsCount = 0;
@@ -107,16 +63,78 @@ int main(int argc, char *argv[]) {
     }
     fclose(classroomsFile);
     
-    sort(classrooms, sizeof(classrooms)/sizeof(classrooms[0]));
+}
+
+void clearInputBuffer() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+}
+
+void getBlockedHours(BlockedHours blockedHours[], int numOfBlockedHours) {
+    int i;
+    for (i = 0; i < numOfBlockedHours; i++) {
+        printf("Please enter the %dth blocked hour's day: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday: ", i + 1);
+
+        // Use scanf with a format specifier that doesn't allow spaces
+        scanf("%9s", blockedHours[i].day);
+
+        // Clear the input buffer
+        clearInputBuffer();
+
+        printf("Please enter the %dth blocked hour's starting time (Please enter the hours without comma, 09.00 as 0900): ", i + 1);
+
+        // Add a format specifier for startingTime
+        scanf("%d", &blockedHours[i].startingTime);
+
+        // Clear the input buffer
+        clearInputBuffer();
+
+        printf("Please enter the %dth blocked hour's ending time (Please enter the hours without comma, 09.00 as 0900): ", i + 1);
+
+        // Add a format specifier for endingTime
+        scanf("%d", &blockedHours[i].endingTime);
+
+        // Clear the input buffer
+        clearInputBuffer();
+    }
+}
+
+
+
+int main(int argc, char *argv[]) {
+	Classes classes[MAX_CLASSES];
+	Classrooms classrooms[MAX_CLASSROOMS];
+	
+	//-----------------Classes csv---------------
+	char classesFileName[30];
+	getFiles(classesFileName,"for classes"); // we are getting the filename from user
+	FILE *classesFile = fopen(classesFileName, "r");
+    readingToClassesStruct(classesFile,classes);
+
+    //-----------------------Classrooms csv-------------
+    char classroomsFileName[30];
+    getFiles(classroomsFileName,"for classrooms");// we are getting the filename from user
+	FILE *classroomsFile = fopen(classroomsFileName, "r");
+	readingToClassroomsStruct(classroomsFile,classrooms);
+	
+    int numOfBlockedHours;
+    printf("How many blocked hours are there? (Blocked hours on different days are counted separately, and if there is an exam between two blocked hours on the same day, they are also counted separately.)\n");
+    scanf("%d",&numOfBlockedHours);
+    BlockedHours blockedHours[numOfBlockedHours];
+    getBlockedHours(blockedHours,numOfBlockedHours);
     
-        for (int i = 0; i < classesCount; i++) {
+  
+    int i;
+            for (i = 0; i < numOfBlockedHours; i++) {
+        printf("Blocked Hours  %s  %d  %d\n",blockedHours[i].day, blockedHours[i].startingTime, blockedHours[i].endingTime);
+    }
+        for (i = 0; i < 100; i++) {
         printf("student ID: %d, Profname: %s, class ID: %s, time: %d\n",
                classes[i].student_id, classes[i].prof_name, classes[i].course_id, classes[i].exam_duration);
     }
 
-        for (int i = 0; i <classroomsCount; ++i) {
+        for (i = 0; i <50; ++i) {
         printf("Room ID: %s, Capacity: %d\n", classrooms[i].room_id, classrooms[i].capacity);
     }
-    
 	return 0;
 }
