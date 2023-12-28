@@ -99,11 +99,63 @@ void getBlockedHours(BlockedHours blockedHours[], int numOfBlockedHours) {
     }
 }
 
+int compare(const Classrooms* A, const Classrooms* B){
+	int difference= (B->capacity)-(A->capacity);
+	
+	if(difference==0){
+		for(int i=0; i<sizeof(A->room_id)-1; i++){
+			if(A->room_id[i] < B->room_id[i]){
+				return 1;
+			}
+			if(A->room_id[i] > B->room_id[i]){
+				return -1;
+			}
+		}
+	}
+	
+	return difference;
+}
 
+void Heap(Classrooms ar[], int N, int i){
+	
+	int big=i;
+	int left = 2 * i + 1;
+	int right = 2 * i + 2;
+	
+	if(left<N && compare(&ar[left],&ar[big]) < 0){
+		big=left;
+	}
+	
+	if(right<N && compare(&ar[right],&ar[big]) < 0){
+		big=right;
+	}
+	
+	if(big!=i){
+		Classrooms temp= ar[i];
+		ar[i]=ar[big];
+		ar[big]=temp;
+		
+		Heap(ar, N, big);
+	}
+}
+
+void sort(Classrooms ar[], int N){
+	for(int i=(N/2)-1; i>=0; i--){
+		Heap(ar,N,i);
+	}
+	for(int i=N-1; i>=0; i--){
+		Classrooms temp=ar[0];
+		ar[0]=ar[i];
+		ar[i]=temp;
+		
+		Heap(ar, i, 0);
+	}
+}
 
 int main(int argc, char *argv[]) {
 	Classes classes[MAX_CLASSES];
 	Classrooms classrooms[MAX_CLASSROOMS];
+	
 	
 	//-----------------Classes csv---------------
 	char classesFileName[30];
@@ -116,6 +168,8 @@ int main(int argc, char *argv[]) {
     getFiles(classroomsFileName,"for classrooms");// we are getting the filename from user
 	FILE *classroomsFile = fopen(classroomsFileName, "r");
 	readingToClassroomsStruct(classroomsFile,classrooms);
+	
+	sort(classrooms, sizeof(classrooms)/sizeof(classrooms[0]));
 	
     int numOfBlockedHours;
     printf("How many blocked hours are there? (Blocked hours on different days are counted separately, and if there is an exam between two blocked hours on the same day, they are also counted separately.)\n");
