@@ -5,12 +5,14 @@
 #define MAX_CLASSES 100
 #define MAX_CLASSROOMS 50
 
+/// her student ve prof için availablity-time structure(?) lazım
+/// 
 typedef struct {
     int student_id;
     char prof_name[20];
     char course_id[20];
     int exam_duration;
-} Classes;
+} Classes; //lecture
 
 typedef struct {
     char room_id[10];
@@ -147,6 +149,90 @@ void sort(Classrooms ar[], int N) {
     }
 }
 
+/// Sorting Classes according to exam_duration -> course_id -> student_id
+int partition(Classes ar[], int low, int high){
+	Classes pivot= ar[high];
+	int i = low-1;
+	
+	for(int j=low; j<=high-1; j++){
+		if(ar[j].exam_duration <= pivot.exam_duration){
+			if(ar[j].exam_duration == pivot.exam_duration){ //course_id comparison
+				if(strcmp(ar[j].course_id, pivot.course_id)>=0){
+					if(strcmp(ar[j].course_id, pivot.course_id)==0){
+						if(ar[j].student_id < pivot.student_id){
+							i++;
+							Classes temp= ar[i];
+							ar[i]=ar[j];
+							ar[j]=temp;
+							//swap
+						}
+					}
+				}else{
+					i++;
+					Classes temp= ar[i];
+					ar[i]=ar[j];
+					ar[j]=temp;
+					//swap
+				}
+			}
+		}else{
+			i++;
+			Classes temp= ar[i];
+			ar[i]=ar[j];
+			ar[j]=temp;
+			//swap
+		}
+	}
+	
+	Classes temp= ar[i+1];
+	ar[i+1]=ar[high];
+	ar[high]=temp;
+	//swap
+	
+	return i+1;
+}
+
+void quickSort(Classes ar[], int low, int high){
+	if(low<high){
+		int pivot= partition(ar, low, high);
+		quickSort(ar, low, pivot-1);
+		quickSort(ar, pivot+1, high);
+	}
+}
+
+//////
+
+int minutesToHours(Classes ar[], int i){
+	int hour= ar[i].exam_duration / 60;
+	int min= ar[i].exam_duration %60;
+	
+	return min+(hour*100);
+}
+
+void setExams(Classes ar[], int index){ //index=0,1,2,3,...,MAX_CLASSES-1
+	
+	if(index==MAX_CLASSES){ //end of the array
+		return;
+	}
+	
+	if(index==0){
+		quickSort(ar, 0, MAX_CLASSES-1);
+		//check BlockedHours then prof_availablity then student...
+		setExams(ar, index+1);
+	}else{// index=1,2,3,4,...
+		if(strcmp(ar[index].course_id, ar[index-1].course_id)!=0 && strcmp(ar[index].prof_name, ar[index-1].prof_name)!=0){ //index inci array elementin sınıf adı & prof adı kendinden öncekine eşit değilse (öncekinden farklı dersteyiz)
+			//check BlockedHours then prof_availablity then student...
+		
+		}else{// eğer index inci element, 1 önceki elementle aynı sınıfa sahipse -> skip this index
+			setExams(ar, size, index+1);
+		}
+	}
+	
+	//lazım olacak 
+	//int duration = minutesToHours(ar, index);
+	return;
+}
+
 int main() {
     Classes classes[MAX_CLASSES];
     Classrooms classrooms[MAX_CLASSROOMS];
@@ -184,6 +270,11 @@ int main() {
         printf("Blocked Hours %s %d %d\n", blockedHours[i].day, blockedHours[i].startingTime, blockedHours[i].endingTime);
     }
 
+	//////////////////*********************//////////////
+	//sort according to exam duration -> course id -> student id
+	
+	//setExams(classes, 0);
+	
     // Displaying classes
     for (i = 0; i < numOfClasses; i++) {
         printf("student ID: %d, Profname: %s, class ID: %s, time: %d\n",
