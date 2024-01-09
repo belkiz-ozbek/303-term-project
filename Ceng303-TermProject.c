@@ -209,6 +209,7 @@ int minutesToHours(Classes ar[], int i){
 	return min+(hour*100);
 }
 
+// mainde setExams(classes, 0); diye çağırılcak
 void setExams(Classes ar[], int index){ //index=0,1,2,3,...,MAX_CLASSES-1
 	
 	if(index==MAX_CLASSES){ //end of the array
@@ -224,7 +225,7 @@ void setExams(Classes ar[], int index){ //index=0,1,2,3,...,MAX_CLASSES-1
 			//check BlockedHours then prof_availablity then student...
 		
 		}else{// eğer index inci element, 1 önceki elementle aynı sınıfa sahipse -> skip this index
-			setExams(ar, size, index+1);
+			setExams(ar, index+1);
 		}
 	}
 	
