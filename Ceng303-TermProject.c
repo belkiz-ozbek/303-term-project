@@ -4,6 +4,7 @@
 
 #define MAX_CLASSES 100
 #define MAX_CLASSROOMS 50
+#define MAX_BLOCKED_HOURS 30
 
 /// her student ve prof için availablity-time structure(?) lazım
 /// 
@@ -75,33 +76,47 @@ void readingToClassroomsStruct(FILE *classroomsFile, Classrooms classrooms[], in
     fclose(classroomsFile);
 }
 
+void readingToBlockedHoursStruct(FILE *blockedHoursFile, BlockedHours blockedHoursArray[], int *numOfBlockedHours) {
+    if (blockedHoursFile == NULL) {
+        perror("Error opening blocked hours file");
+        exit(EXIT_FAILURE);
+    }
+
+    int blockedHoursCount = 0;
+    char line[MAX_BLOCKED_HOURS];
+    
+    while (fgets(line, sizeof(line), blockedHoursFile) != NULL && blockedHoursCount < MAX_BLOCKED_HOURS) {
+        // Remove newline character from the end of the line
+        line[strcspn(line, "\n")] = '\0';
+
+        // Check if the line is empty
+        if (line[0] == '\0') {
+            // Skip empty line
+            continue;
+        }
+
+        // Reading from the file to struct
+        sscanf(line, "%9[^,],%d,%d", blockedHoursArray[blockedHoursCount].day, &blockedHoursArray[blockedHoursCount].startingTime, &blockedHoursArray[blockedHoursCount].endingTime);
+
+        blockedHoursCount++;
+    }
+	printf("%d",blockedHoursCount);
+    *numOfBlockedHours = blockedHoursCount;
+    fclose(blockedHoursFile);
+}
+
 void clearInputBuffer() {
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
 }
 
-void getBlockedHours(BlockedHours blockedHours[], int numOfBlockedHours) {
-    int i;
-    for (i = 0; i < numOfBlockedHours; i++) {
-        printf("Please enter the %dth blocked hour's day: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday: ", i + 1);
-        scanf("%9s", blockedHours[i].day);
-        clearInputBuffer();
-
-        printf("Please enter the %dth blocked hour's starting time (Please enter the hours without comma, 09.00 as 0900): ", i + 1);
-        scanf("%d", &blockedHours[i].startingTime);
-        clearInputBuffer();
-
-        printf("Please enter the %dth blocked hour's ending time (Please enter the hours without comma, 09.00 as 0900): ", i + 1);
-        scanf("%d", &blockedHours[i].endingTime);
-        clearInputBuffer();
-    }
-}
 
 int compare(const Classrooms *A, const Classrooms *B) {
     int difference = B->capacity - A->capacity;
 
     if (difference == 0) {
-        for (int i = 0; i < sizeof(A->room_id) - 1; i++) {
+    	int i;
+        for (i = 0; i < sizeof(A->room_id) - 1; i++) {
             if (A->room_id[i] < B->room_id[i]) {
                 return 1;
             }
@@ -137,10 +152,11 @@ void Heap(Classrooms ar[], int N, int i) {
 }
 
 void sort(Classrooms ar[], int N) {
-    for (int i = (N / 2) - 1; i >= 0; i--) {
+	int i;
+    for (i = (N / 2) - 1; i >= 0; i--) {
         Heap(ar, N, i);
     }
-    for (int i = N - 1; i >= 0; i--) {
+    for (i = N - 1; i >= 0; i--) {
         Classrooms temp = ar[0];
         ar[0] = ar[i];
         ar[i] = temp;
@@ -153,8 +169,8 @@ void sort(Classrooms ar[], int N) {
 int partition(Classes ar[], int low, int high){
 	Classes pivot= ar[high];
 	int i = low-1;
-	
-	for(int j=low; j<=high-1; j++){
+	int j;
+	for(j=low; j<=high-1; j++){
 		if(ar[j].exam_duration <= pivot.exam_duration){
 			if(ar[j].exam_duration == pivot.exam_duration){ //course_id comparison
 				if(strcmp(ar[j].course_id, pivot.course_id)>=0){
@@ -237,10 +253,11 @@ void setExams(Classes ar[], int index){ //index=0,1,2,3,...,MAX_CLASSES-1
 int main() {
     Classes classes[MAX_CLASSES];
     Classrooms classrooms[MAX_CLASSROOMS];
-    BlockedHours blockedHours[MAX_CLASSES];
+    BlockedHours blockedHours[MAX_BLOCKED_HOURS];
 
     int numOfClasses = 0;
     int numOfClassrooms = 0;
+    int numOfBlockedHours = 0;
 
     // Reading classes file
     char classesFileName[30];
@@ -254,16 +271,15 @@ int main() {
     FILE *classroomsFile = fopen(classroomsFileName, "r");
     readingToClassroomsStruct(classroomsFile, classrooms, &numOfClassrooms);
 
+
+    //Reading blocked hours file
+    char blockedHoursFileName[30];
+    getFiles(blockedHoursFileName, "for blocked hours");
+    FILE *blockedHoursFile = fopen(blockedHoursFileName, "r");
+    readingToBlockedHoursStruct(blockedHoursFile,blockedHours,&numOfBlockedHours);
+    
     // Sorting classrooms
     sort(classrooms, numOfClassrooms);
-
-    int numOfBlockedHours;
-    printf("How many blocked hours are there? (Blocked hours on different days are counted separately, and if there is an exam between two blocked hours on the same day, they are also counted separately.)\n");
-    scanf("%d", &numOfBlockedHours);
-    clearInputBuffer();
-
-    // Getting blocked hours
-    getBlockedHours(blockedHours, numOfBlockedHours);
 
     // Displaying blocked hours
     int i;
