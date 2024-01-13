@@ -10,28 +10,27 @@
 /// 
 
 typedef struct {
-    char day[9];
-    int startingTime;
-    int endingTime;
-} AvailabilityTime;
+    char prof_name[20];
+    int is_available; // 1 if available, 0 if not
+} ProfessorAvailability;
+
+typedef struct {
+    int student_id;
+    int is_available; // 1 if available, 0 if not
+} StudentAvailability;
 
 typedef struct {
     int student_id;
     char prof_name[20];
     char course_id[20];
     int exam_duration;
-    AvailabilityTime availability;	
+    int assigned; // 1 if assigned, 0 if not	
 } Classes; //lecture
 
 typedef struct {
     char room_id[10];
     int capacity;
 } Classrooms;
-
-typedef struct {
-    char prof_name[20];
-    AvailabilityTime availability;
-} Professors;
 
 typedef struct {
     char day[9];
@@ -60,8 +59,7 @@ void readingToClassesStruct(FILE *classesFile, Classes classes[], int *numOfClas
         // Reading from the file to classes struct
         sscanf(line, "%d,%19[^,],%19[^,],%d",
                &classes[classesCount].student_id, classes[classesCount].prof_name,
-               classes[classesCount].course_id, &classes[classesCount].exam_duration,
-        	classes[classesCount].availability.day, &classes[classesCount].availability.startingTime, &classes[classesCount].availability.endingTime);
+               classes[classesCount].course_id, &classes[classesCount].exam_duration);
 
         classesCount++;
     }
@@ -125,22 +123,8 @@ void clearInputBuffer() {
 }
 
 
-int compare(const Classrooms *A, const Classrooms *B) {
-    int difference = B->capacity - A->capacity;
-
-    if (difference == 0) {
-    	int i;
-        for (i = 0; i < sizeof(A->room_id) - 1; i++) {
-            if (A->room_id[i] < B->room_id[i]) {
-                return 1;
-            }
-            if (A->room_id[i] > B->room_id[i]) {
-                return -1;
-            }
-        }
-    }
-
-    return difference;
+int compare(const Classrooms *a, const Classrooms *b) {
+    return ((Classrooms *)b)->capacity - ((Classrooms *)a)->capacity;
 }
 
 void Heap(Classrooms ar[], int N, int i) {
@@ -239,35 +223,81 @@ int minutesToHours(Classes ar[], int i){
 	return min+(hour*100);
 }
 
-// mainde setExams(classes, 0); diye çağırılcak
-void setExams(Classes ar[], int index){ //index=0,1,2,3,...,MAX_CLASSES-1
-	
-	if(index==MAX_CLASSES){ //end of the array
-		return;
-	}
-	
-	if(index==0){
-		quickSort(ar, 0, MAX_CLASSES-1);
-		//check BlockedHours then prof_availablity then student...
-		setExams(ar, index+1);
-	}else{// index=1,2,3,4,...
-		if(strcmp(ar[index].course_id, ar[index-1].course_id)!=0 || strcmp(ar[index].prof_name, ar[index-1].prof_name)!=0){ //index inci array elementin sınıf adı ya da prof adı kendinden öncekine eşit değilse (öncekinden farklı dersteyiz)
-			//check BlockedHours then prof_availablity then student...
-		
-		}else{// eğer index inci element, 1 önceki elementle aynı sınıfa sahipse -> skip this index
-			setExams(ar, index+1);
-		}
-	}
-	
-	//lazım olacak 
-	//int duration = minutesToHours(ar, index);
-	return;
+void initializeAvailability(StudentAvailability studentAvailabilities[], ProfessorAvailability profAvailabilities[], int numOfStudents, int numOfProfs) {
+    // Initialize student availabilities
+    for (int i = 0; i < numOfStudents; i++) {
+        studentAvailabilities[i].student_id = i + 1; // Assuming student IDs start from 1
+        studentAvailabilities[i].is_available = 1; // Initially, all students are available
+    }
+
+    // Initialize professor availabilities
+    for (int i = 0; i < numOfProfs; i++) {
+        strcpy(profAvailabilities[i].prof_name, ""); // Initialize with an empty string
+        profAvailabilities[i].is_available = 1; // Initially, all professors are available
+    }
+}
+
+int isStudentAvailable(StudentAvailability studentAvailabilities[], int student_id) {
+    return studentAvailabilities[student_id - 1].is_available;
+}
+
+void setStudentUnavailable(StudentAvailability studentAvailabilities[], int student_id) {
+    studentAvailabilities[student_id - 1].is_available = 0;
+}
+
+int isProfAvailable(ProfessorAvailability profAvailabilities[], const char *prof_name) {
+    for (int i = 0; i < MAX_CLASSES; i++) {
+        if (strcmp(profAvailabilities[i].prof_name, prof_name) == 0 && profAvailabilities[i].is_available) {
+            return 1; // Prof is available
+        }
+    }
+    return 0; // Prof is not available
+}
+
+void setProfUnavailable(ProfessorAvailability profAvailabilities[], const char *prof_name) {
+    for (int i = 0; i < MAX_CLASSES; i++) {
+        if (strcmp(profAvailabilities[i].prof_name, prof_name) == 0) {
+            profAvailabilities[i].is_available = 0; // Mark prof as unavailable
+            break;
+        }
+    }
+}
+
+
+void setExams(Classes ar[], int index, StudentAvailability studentAvailabilities[], ProfessorAvailability profAvailabilities[], int numOfClasses) {
+    if (index == numOfClasses) {
+        return; // End of the array
+    }
+
+    if (index == 0) {
+        quickSort(ar, 0, numOfClasses - 1);
+        // Check BlockedHours, Professors, and Students availability
+        setExams(ar, index + 1, studentAvailabilities, profAvailabilities, numOfClasses);
+    } else {
+        if (strcmp(ar[index].course_id, ar[index - 1].course_id) != 0 || strcmp(ar[index].prof_name, ar[index - 1].prof_name) != 0) {
+            // Check BlockedHours, Professors, and Students availability
+            setExams(ar, index + 1, studentAvailabilities, profAvailabilities, numOfClasses);
+        } else {
+            // If index-th element is for the same class and professor as the previous one, check availability
+            if (isStudentAvailable(studentAvailabilities, ar[index].student_id) && isProfAvailable(profAvailabilities, ar[index].prof_name)) {
+                // Assign exam and mark student and professor as unavailable for this time slot
+                printf("Assigning exam for Student ID: %d, Prof Name: %s, Course ID: %s, Exam Duration: %d\n",
+                       ar[index].student_id, ar[index].prof_name, ar[index].course_id, ar[index].exam_duration);
+                setStudentUnavailable(studentAvailabilities, ar[index].student_id);
+                setProfUnavailable(profAvailabilities, ar[index].prof_name);
+            }
+            // Check BlockedHours, Professors, and Students availability
+            setExams(ar, index + 1, studentAvailabilities, profAvailabilities, numOfClasses);
+        }
+    }
 }
 
 int main() {
     Classes classes[MAX_CLASSES];
     Classrooms classrooms[MAX_CLASSROOMS];
     BlockedHours blockedHours[MAX_BLOCKED_HOURS];
+    StudentAvailability studentAvailabilities[MAX_CLASSES];
+    ProfessorAvailability profAvailabilities[MAX_CLASSES];
 
     int numOfClasses = 0;
     int numOfClassrooms = 0;
@@ -304,7 +334,9 @@ int main() {
 	//////////////////*********************//////////////
 	//sort according to exam duration -> course id -> student id
 	
-	//setExams(classes, 0);
+	 initializeAvailability(studentAvailabilities, profAvailabilities, MAX_CLASSES, MAX_CLASSES);
+    setExams(classes, 0, studentAvailabilities, profAvailabilities, numOfClasses);
+
 	
     // Displaying classes
     for (i = 0; i < numOfClasses; i++) {
