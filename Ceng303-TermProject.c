@@ -8,17 +8,30 @@
 
 /// her student ve prof için availablity-time structure(?) lazım
 /// 
+
+typedef struct {
+    char day[9];
+    int startingTime;
+    int endingTime;
+} AvailabilityTime;
+
 typedef struct {
     int student_id;
     char prof_name[20];
     char course_id[20];
     int exam_duration;
+    AvailabilityTime availability;	
 } Classes; //lecture
 
 typedef struct {
     char room_id[10];
     int capacity;
 } Classrooms;
+
+typedef struct {
+    char prof_name[20];
+    AvailabilityTime availability;
+} Professors;
 
 typedef struct {
     char day[9];
@@ -47,7 +60,8 @@ void readingToClassesStruct(FILE *classesFile, Classes classes[], int *numOfClas
         // Reading from the file to classes struct
         sscanf(line, "%d,%19[^,],%19[^,],%d",
                &classes[classesCount].student_id, classes[classesCount].prof_name,
-               classes[classesCount].course_id, &classes[classesCount].exam_duration);
+               classes[classesCount].course_id, &classes[classesCount].exam_duration,
+        	classes[classesCount].availability.day, &classes[classesCount].availability.startingTime, &classes[classesCount].availability.endingTime);
 
         classesCount++;
     }
