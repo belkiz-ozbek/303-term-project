@@ -53,6 +53,73 @@ void getRandomDay(char day[9]) {
 int getRandomStartingTime() {
     return START_TIME + (rand() % ((END_TIME - START_TIME) / TIME_SLOT)) * TIME_SLOT;
 }
+
+int partition(Classes ar[], int low, int high){
+	Classes pivot= ar[high];
+	int i = low-1;
+
+	for(int j=low; j<=high-1; j++){
+		if(ar[j].exam_duration <= pivot.exam_duration){
+			if(ar[j].exam_duration == pivot.exam_duration){ //course_id comparison
+				if(strcmp(ar[j].course_id, pivot.course_id)>=0){
+					if(strcmp(ar[j].course_id, pivot.course_id)==0){
+						if(ar[j].student_id < pivot.student_id){
+							i++;
+							Classes temp= ar[i];
+							ar[i]=ar[j];
+							ar[j]=temp;
+							//swap
+						}
+					}
+				}else{
+					i++;
+					Classes temp= ar[i];
+					ar[i]=ar[j];
+					ar[j]=temp;
+					//swap
+				}
+			}
+		}else{
+			i++;
+			Classes temp= ar[i];
+			ar[i]=ar[j];
+			ar[j]=temp;
+			//swap
+		}
+	}
+
+	Classes temp= ar[i+1];
+	ar[i+1]=ar[high];
+	ar[high]=temp;
+	//swap
+
+	return i+1;
+}
+
+void quickSort(Classes ar[], int low, int high){
+	if(low<high){
+		int pivot= partition(ar, low, high);
+		quickSort(ar, low, pivot-1);
+		quickSort(ar, pivot+1, high);
+	}
+}
+
+int calculateClassesNum(Classes ar[]){
+	
+	quickSort(ar, 0, MAX_CLASSES-1);
+	
+	int count=0;
+	
+	for(int i=0; i<MAX_CLASSES-1; i++){
+		if(strcmp(ar[i].course_id, ar[i+1].course_id)!=0){
+			if(strcmp(ar[i].prof_name, ar[i+1].prof_name)!=0){
+				count++;
+			}
+		}
+	}
+	return count;
+}
+
 void getFiles(char arr[], const char *forWhat) {
     printf("Please enter the file name for %s: ", forWhat);
     scanf("%s", arr);
@@ -64,8 +131,8 @@ void readingToClassesStruct(FILE *classesFile, Classes classes[], int *numOfClas
         perror("Error opening classes file");
         exit(EXIT_FAILURE);
     }
-
-    int classesCount = 0;
+    
+	int classesCount=0;
     char line[MAX_CLASSES];
     while (fgets(line, sizeof(line), classesFile) != NULL && classesCount < MAX_CLASSES) {
         line[strcspn(line, "\n")] = '\0';
@@ -73,10 +140,11 @@ void readingToClassesStruct(FILE *classesFile, Classes classes[], int *numOfClas
         sscanf(line, "%d,%19[^,],%19[^,],%d",
                &classes[classesCount].student_id, classes[classesCount].prof_name,
                classes[classesCount].course_id, &classes[classesCount].exam_duration);
-
-        classesCount++;
+               
+               classesCount++;
     }
-    *numOfClasses = classesCount;
+    
+    *numOfClasses = calculateClassesNum(classes);
     fclose(classesFile);
 }
 
@@ -171,8 +239,6 @@ void sort(Classrooms ar[], int N) {
     }
 }
 
-
-
 int isClassroomAvailable(Classrooms classroom, int day, int timeSlot, int examDuration, Schedule schedule[], int scheduleSize) {
     for (int i = 0; i < scheduleSize; i++) {
         if (strcmp(schedule[i].day, weekdays[day]) == 0 &&
@@ -242,23 +308,6 @@ int checkSchedule(const Schedule *currentSchedule, const Classes *classes, const
     return 1;  // a valid schedule is found!!!!
 }
 
-void printExamSchedule(const Schedule *schedule, const Classes *classes, const Classrooms *classrooms, int numScheduledExams) {
-    printf("Exam Schedule:\n");
-    printf("%-10s %-20s %-10s %-15s %-10s\n", "Day", "Starting Time", "Room", "Prof Name", "Course ID");
-
-    for (int i = 0; i < numScheduledExams; i++) {
-        int classIndex = schedule[i].courseIndex;
-        int roomIndex = schedule[i].roomIndex;
-
-        printf("%-10s %-20d %-10s %-15s %-10s\n",
-               schedule[i].day,
-               schedule[i].startingTime,
-               classrooms[roomIndex].room_id,
-               classes[classIndex].prof_name,
-               classes[classIndex].course_id);
-    }
-}
-
 void backtrackToFindSchedule(Schedule *currentSchedule, const Classes *classes, const Classrooms *classrooms, const BlockedHours *blockedHours, int numScheduledExams, int numCourses, int numRooms, int numBlockedHours) {
   if (numScheduledExams == numCourses) {
         printf("all exams are scheduled");
@@ -267,7 +316,7 @@ void backtrackToFindSchedule(Schedule *currentSchedule, const Classes *classes, 
 
     for (int j = 0; j < numCourses; j++) {
       
-        if (currentSchedule[j].courseIndex == -1) {
+        if (currentSchedule[j].courseIndex == -1 && currentSchedule[j].roomIndex == -1) {
             for (int i = 0; i < numRooms; i++) {
                 currentSchedule[j].courseIndex = j;
                 currentSchedule[j].roomIndex = i;
@@ -278,7 +327,7 @@ void backtrackToFindSchedule(Schedule *currentSchedule, const Classes *classes, 
 
                     // recursive backtrack
                     backtrackToFindSchedule(currentSchedule, classes, classrooms, blockedHours, numScheduledExams + 1, numCourses, numRooms, numBlockedHours);
-
+					
                     //remove assignment to backtrack
                     currentSchedule[j].courseIndex = -1;
                     currentSchedule[j].roomIndex = -1;
@@ -297,6 +346,22 @@ void backtrackToFindSchedule(Schedule *currentSchedule, const Classes *classes, 
 
 }
 
+void printExamSchedule(const Schedule *schedule, const Classes *classes, const Classrooms *classrooms, int numScheduledExams) {
+    printf("Exam Schedule:\n");
+    printf("%-10s %-20s %-10s %-15s %-10s\n", "Day", "Starting Time", "Room", "Prof Name", "Course ID");
+
+    for (int i = 0; i < numScheduledExams; i++) {
+        int classIndex = schedule[i].courseIndex;
+        int roomIndex = schedule[i].roomIndex;
+
+        printf("%-10s %-20d %-10s %-15s %-10s\n",
+       			schedule[i].day,
+       			schedule[i].startingTime,
+       			classrooms[roomIndex].room_id,
+       			classes[classIndex].prof_name,
+       			classes[classIndex].course_id);
+    }
+}
 
 int main() {
     Classes classes[MAX_CLASSES];
@@ -304,11 +369,10 @@ int main() {
     BlockedHours blockedHours[MAX_CLASSES];
     Schedule currentSchedule[MAX_CLASSES];
 
-    int numOfClasses = 0;
-    int numOfClassrooms = 0;
     int numOfBlockedHours = 0;
     int numScheduledExams=0;
 
+	////////////////// reading csv files in this part: ////////////////////////
     char classesFileName[30];
     getFiles(classesFileName, "for classes");
     FILE *classesFile = fopen(classesFileName, "r");
@@ -324,9 +388,14 @@ int main() {
     FILE *blockedHoursFile = fopen(blockedHoursFileName, "r");
     readingToBlockedHoursStruct(blockedHoursFile, blockedHours, &numOfBlockedHours);
 
+	////////////////****************************/////////////////////
+	
+	printf("%d\n\n",numOfClasses);
+	printf("%d\n\n",numOfClassrooms);
+	
     sort(classrooms, numOfClassrooms);
     
-     for (int i = 0; i < MAX_CLASSES; i++) {
+     for (int i = 0; i < numOfClasses; i++) {
         currentSchedule[i].courseIndex = -1;
         currentSchedule[i].roomIndex = -1;
         getRandomDay(currentSchedule[i].day);
@@ -339,4 +408,3 @@ int main() {
     fclose(classroomsFile);
     return 0;
 }
-
