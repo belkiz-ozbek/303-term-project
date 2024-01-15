@@ -9,6 +9,8 @@
 #define END_TIME 1080    // 6:00 PM in minutes (18 * 60)
 #define TIME_SLOT 30  
 
+//https://github.com/belkiz-ozbek/303-term-project
+
 const char *weekdays[] = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 const int dayDuration = 540; // 9 hours in minutes
 int numOfDays = 6; // Number of days in a week
