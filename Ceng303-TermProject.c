@@ -18,6 +18,7 @@ const int dayDuration = 540; // 9 hours in minutes
 int numOfDays = 6; // Number of days in a week
 int numOfClasses = 0;
 int numOfClassrooms = 0;
+int numScheduledExams=0;
 
 typedef struct {
     int student_id;
