@@ -58,8 +58,8 @@ int getRandomStartingTime() {
 int partition(Classes ar[], int low, int high){
 	Classes pivot= ar[high];
 	int i = low-1;
-
-	for(int j=low; j<=high-1; j++){
+	int j;
+	for(j=low; j<=high-1; j++){
 		if(ar[j].exam_duration <= pivot.exam_duration){
 			if(ar[j].exam_duration == pivot.exam_duration){ //course_id comparison
 				if(strcmp(ar[j].course_id, pivot.course_id)>=0){
@@ -110,8 +110,8 @@ int calculateClassesNum(Classes ar[]){
 	quickSort(ar, 0, MAX_CLASSES-1);
 	
 	int count=0;
-	
-	for(int i=0; i<MAX_CLASSES-1; i++){
+	int i;
+	for(i=0; i<MAX_CLASSES-1; i++){
 		if(strcmp(ar[i].course_id, ar[i+1].course_id)!=0){
 			if(strcmp(ar[i].prof_name, ar[i+1].prof_name)!=0){
 				count++;
@@ -241,7 +241,8 @@ void sort(Classrooms ar[], int N) {
 }
 
 int isClassroomAvailable(Classrooms classroom, int day, int timeSlot, int examDuration, Schedule schedule[], int scheduleSize) {
-    for (int i = 0; i < scheduleSize; i++) {
+	int i;
+    for (i = 0; i < scheduleSize; i++) {
         if (strcmp(schedule[i].day, weekdays[day]) == 0 &&
             schedule[i].startingTime <= timeSlot && timeSlot <= schedule[i].startingTime + examDuration) {
             return 0;
@@ -251,7 +252,8 @@ int isClassroomAvailable(Classrooms classroom, int day, int timeSlot, int examDu
 }
 
 int isStudentAvailable(int studentID, int day, int timeSlot, int examDuration, Schedule schedule[], int scheduleSize, Classes classes[]) {
-    for (int i = 0; i < scheduleSize; i++) {
+	int i;
+    for (i = 0; i < scheduleSize; i++) {
         if (strcmp(schedule[i].day, weekdays[day]) == 0 &&
             schedule[i].startingTime <= timeSlot + examDuration &&
             timeSlot <= schedule[i].startingTime + classes[schedule[i].courseIndex].exam_duration &&
@@ -263,7 +265,8 @@ int isStudentAvailable(int studentID, int day, int timeSlot, int examDuration, S
 }
 
 int isProfAvailable(const char *profName, int day, int timeSlot, int examDuration, Schedule schedule[], int scheduleSize, Classes classes[]) {
-    for (int i = 0; i < scheduleSize; i++) {
+	int i;
+    for (i = 0; i < scheduleSize; i++) {
         if (strcmp(schedule[i].day, weekdays[day]) == 0 &&
             schedule[i].startingTime <= timeSlot && timeSlot <= schedule[i].startingTime + examDuration &&
             strcmp(profName, classes[schedule[i].courseIndex].prof_name) == 0) {
@@ -275,39 +278,32 @@ int isProfAvailable(const char *profName, int day, int timeSlot, int examDuratio
 
 // Function we will  use  in the backtracking step
 int checkSchedule(const Schedule *currentSchedule, const Classes *classes, const Classrooms *classrooms, const BlockedHours *blockedHours, int numScheduledExams) {
-    for (int i = 0; i < numScheduledExams; i++) {
-        // Checkking student availablity
-        if (currentSchedule[i].courseIndex != -1 &&
-            classes[currentSchedule[i].courseIndex].student_id == classes[numScheduledExams].student_id &&
+    int i;
+    for (i = 0; i < numScheduledExams; i++) {
+        // Checking student availability
+        if (classes[currentSchedule[i].courseIndex].student_id == classes[numScheduledExams].student_id &&
             strcmp(classes[currentSchedule[i].courseIndex].course_id, classes[numScheduledExams].course_id) != 0) {
-            return 0;  // there şs a conflict ---->Student has two exams at the same time
+            return 0;  // there is a conflict ---->Student has two exams at the same time
         }
 
-        // Checking  professor availablity
-        if (currentSchedule[i].courseIndex != -1 &&
-            strcmp(classes[currentSchedule[i].courseIndex].prof_name, classes[numScheduledExams].prof_name) == 0) {
+        // Checking professor availability
+        if (strcmp(classes[currentSchedule[i].courseIndex].prof_name, classes[numScheduledExams].prof_name) == 0) {
             return 0;  // there is a conflict--->Professor has two exams at the same time
-             
         }
-    }
-
-    // Checking the room capacity 
-    int roomCapacity = classrooms[currentSchedule[numScheduledExams].roomIndex].capacity;
-    if (roomCapacity >= classes[numScheduledExams].exam_duration / 2) {
-        return 0; 
     }
 
     // Checking the conflict of blocked hours
-    for (int i = 0; i < numScheduledExams; i++) {
-        if (strcmp(currentSchedule[i].day, blockedHours[numScheduledExams].day) == 0 &&
-            currentSchedule[i].startingTime >= blockedHours[numScheduledExams].startingTime &&
-            currentSchedule[i].startingTime < blockedHours[numScheduledExams].endingTime) {
+    for (i = 0; i < numScheduledExams; i++) {
+        if (strcmp(currentSchedule[i].day, blockedHours[i].day) == 0 &&
+            currentSchedule[i].startingTime >= blockedHours[i].startingTime &&
+            currentSchedule[i].startingTime < blockedHours[i].endingTime) {
             return 0; 
         }
     }
 
     return 1;  // a valid schedule is found!!!!
 }
+
 
 int minToHour(int min){
 	int m,hour;
@@ -319,8 +315,8 @@ int minToHour(int min){
 void printExamSchedule(const Schedule *schedule, const Classes *classes, const Classrooms *classrooms, int numCourses) {
     printf("Exam Schedule:\n");
     printf("%-10s %-20s %-10s %-15s %-10s\n", "Day", "Starting Time", "Room", "Prof Name", "Course ID");
-
-    for (int i = 0; i < numCourses; i++) {
+	int i;
+    for ( i = 0; i < numCourses; i++) {
         int classIndex = schedule[i].courseIndex;
         int roomIndex = schedule[i].roomIndex;
 
@@ -340,11 +336,11 @@ void backtrackToFindSchedule(Schedule *currentSchedule, const Classes *classes, 
         printExamSchedule(currentSchedule, classes, classrooms, numScheduledExams);
         return;
     }
-
-    for (int j = 0; j < numCourses; j++) {
+	int i,j;
+    for (j = 0; j < numCourses; j++) {
       
         if (currentSchedule[j].courseIndex == -1 && currentSchedule[j].roomIndex == -1) {
-            for (int i = 0; i < numRooms; i++) {
+            for (i = 0; i < numRooms; i++) {
                 currentSchedule[j].courseIndex = j;
                 currentSchedule[j].roomIndex = i;
 
@@ -352,10 +348,11 @@ void backtrackToFindSchedule(Schedule *currentSchedule, const Classes *classes, 
                     getRandomDay(currentSchedule[j].day);
                     currentSchedule[j].startingTime = getRandomStartingTime();
 					
-					numScheduledExams++;
+					int numScheduledExamsCopy = numScheduledExams;
+					numScheduledExamsCopy++;
 					
                     // recursive backtrack
-                    backtrackToFindSchedule(currentSchedule, classes, classrooms, blockedHours, numScheduledExams, numCourses, numRooms, numBlockedHours);
+                    backtrackToFindSchedule(currentSchedule, classes, classrooms, blockedHours, numScheduledExamsCopy, numCourses, numRooms, numBlockedHours);
 					
 					
                     //remove assignment to backtrack
@@ -375,6 +372,7 @@ void backtrackToFindSchedule(Schedule *currentSchedule, const Classes *classes, 
     }
 
 }
+
 
 
 int main() {
@@ -407,8 +405,8 @@ int main() {
 	printf("%d\n\n",numOfClassrooms);
 	
     sort(classrooms, numOfClassrooms);
-    
-     for (int i = 0; i < numOfClasses; i++) {
+    int i;
+     for (i = 0; i < numOfClasses; i++) {
         currentSchedule[i].courseIndex = -1;
         currentSchedule[i].roomIndex = -1;
         getRandomDay(currentSchedule[i].day);
