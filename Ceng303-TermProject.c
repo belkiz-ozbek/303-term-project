@@ -308,9 +308,35 @@ int checkSchedule(const Schedule *currentSchedule, const Classes *classes, const
     return 1;  // a valid schedule is found!!!!
 }
 
-void backtrackToFindSchedule(Schedule *currentSchedule, const Classes *classes, const Classrooms *classrooms, const BlockedHours *blockedHours, int numScheduledExams, int numCourses, int numRooms, int numBlockedHours) {
+int minToHour(int min){
+	int m,hour;
+	hour=min/60;
+	m=min%60;
+	return(hour*100+m);
+}
+
+void printExamSchedule(const Schedule *schedule, const Classes *classes, const Classrooms *classrooms, int numCourses) {
+    printf("Exam Schedule:\n");
+    printf("%-10s %-20s %-10s %-15s %-10s\n", "Day", "Starting Time", "Room", "Prof Name", "Course ID");
+
+    for (int i = 0; i < numCourses; i++) {
+        int classIndex = schedule[i].courseIndex;
+        int roomIndex = schedule[i].roomIndex;
+
+        printf("%-10s %-20d %-10s %-15s %-10s\n",
+       			schedule[i].day,
+       			minToHour(schedule[i].startingTime),
+       			classrooms[roomIndex].room_id,
+       			classes[classIndex].prof_name,
+       			classes[classIndex].course_id);
+    }
+}
+void backtrackToFindSchedule(Schedule *currentSchedule, const Classes *classes, const Classrooms *classrooms, const BlockedHours *blockedHours, int numScheduledExams, int numCourses, int numRooms, int numBlockedHours) { 
+  printExamSchedule(currentSchedule, classes, classrooms, numScheduledExams);
+  
   if (numScheduledExams == numCourses) {
         printf("all exams are scheduled");
+        printExamSchedule(currentSchedule, classes, classrooms, numScheduledExams);
         return;
     }
 
@@ -324,9 +350,12 @@ void backtrackToFindSchedule(Schedule *currentSchedule, const Classes *classes, 
                 if (checkSchedule(currentSchedule, classes, classrooms, blockedHours, numScheduledExams)) {
                     getRandomDay(currentSchedule[j].day);
                     currentSchedule[j].startingTime = getRandomStartingTime();
-
+					
+					numScheduledExams++;
+					
                     // recursive backtrack
-                    backtrackToFindSchedule(currentSchedule, classes, classrooms, blockedHours, numScheduledExams + 1, numCourses, numRooms, numBlockedHours);
+                    backtrackToFindSchedule(currentSchedule, classes, classrooms, blockedHours, numScheduledExams, numCourses, numRooms, numBlockedHours);
+					
 					
                     //remove assignment to backtrack
                     currentSchedule[j].courseIndex = -1;
@@ -346,22 +375,6 @@ void backtrackToFindSchedule(Schedule *currentSchedule, const Classes *classes, 
 
 }
 
-void printExamSchedule(const Schedule *schedule, const Classes *classes, const Classrooms *classrooms, int numScheduledExams) {
-    printf("Exam Schedule:\n");
-    printf("%-10s %-20s %-10s %-15s %-10s\n", "Day", "Starting Time", "Room", "Prof Name", "Course ID");
-
-    for (int i = 0; i < numScheduledExams; i++) {
-        int classIndex = schedule[i].courseIndex;
-        int roomIndex = schedule[i].roomIndex;
-
-        printf("%-10s %-20d %-10s %-15s %-10s\n",
-       			schedule[i].day,
-       			schedule[i].startingTime,
-       			classrooms[roomIndex].room_id,
-       			classes[classIndex].prof_name,
-       			classes[classIndex].course_id);
-    }
-}
 
 int main() {
     Classes classes[MAX_CLASSES];
@@ -370,7 +383,6 @@ int main() {
     Schedule currentSchedule[MAX_CLASSES];
 
     int numOfBlockedHours = 0;
-    int numScheduledExams=0;
 
 	////////////////// reading csv files in this part: ////////////////////////
     char classesFileName[30];
@@ -403,6 +415,9 @@ int main() {
     }
 
     backtrackToFindSchedule(currentSchedule, classes, classrooms, blockedHours, 0, numOfClasses, numOfClassrooms, numOfBlockedHours);
+    
+	printf("%d\n\n",numScheduledExams); //////////neden 0?????
+	
     printExamSchedule(currentSchedule, classes, classrooms, numScheduledExams);
     fclose(classesFile);
     fclose(classroomsFile);
