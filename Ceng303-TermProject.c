@@ -308,8 +308,9 @@ int minToHour(int min){
 }
 
 void printExamSchedule(const Schedule *schedule, const Classes *classes, const Classrooms *classrooms, int numCourses) {
-    printf("Exam Schedule:\n");
+    printf("\nExam Schedule:\n");
     printf("%-10s %-20s %-10s %-15s %-10s\n", "Day", "Starting Time", "Room", "Prof Name", "Course ID");
+    printf("---------------------------------------------------------------------------\n");
 	int i;
     for ( i = 0; i < numCourses; i++) {
         int classIndex = schedule[i].courseIndex;
