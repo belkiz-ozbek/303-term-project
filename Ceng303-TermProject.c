@@ -360,14 +360,9 @@ void backtrackToFindSchedule(Schedule *currentSchedule, const Classes *classes, 
                     currentSchedule[j].roomIndex = -1;
                     getRandomDay(currentSchedule[j].day);
                     currentSchedule[j].startingTime = getRandomStartingTime();
-                } else {
-                    //bu kısımdan emin değilim
-                    currentSchedule[j].courseIndex = -1;
-                    currentSchedule[j].roomIndex = -1;
-                    getRandomDay(currentSchedule[j].day);
-                    currentSchedule[j].startingTime = getRandomStartingTime();
-                }
+                } 
             }
+		j++;
         }
     }
 
